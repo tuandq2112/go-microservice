@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package user;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/tuandq2112/go-microservices/shared/proto/types/user;";
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/users/{user_id}"
+    };
+  }
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/users"
+      body: "*"
+    };
+  }
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      put: "/users/{user_id}"
+      body: "*"
+    };
+  }
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
+    option (google.api.http) = {
+      delete: "/users/{user_id}"
+    };
+  }
+}
+
+message GetUserRequest {
+  string user_id = 1 [(validate.rules).string = {
+    min_len: 1,
+    max_len: 64
+  }];
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message CreateUserRequest {
+  string username = 1 [(validate.rules).string = {
+    min_len: 3,
+    max_len: 32,
+    pattern: "^[a-zA-Z0-9_]+$"
+  }];
+  string email = 2 [(validate.rules).string = {
+    email: true,
+    max_len: 255
+  }];
+  string full_name = 3 [(validate.rules).string = {
+    min_len: 1,
+    max_len: 100
+  }];
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+message UpdateUserRequest {
+  string user_id = 1 [(validate.rules).string = {
+    min_len: 1,
+    max_len: 64
+  }];
+  optional string username = 2 [(validate.rules).string = {
+    min_len: 3,
+    max_len: 32,
+    pattern: "^[a-zA-Z0-9_]+$",
+    ignore_empty: true
+  }];
+  optional string email = 3 [(validate.rules).string = {
+    email: true,
+    max_len: 255,
+    ignore_empty: true
+  }];
+  optional string full_name = 4 [(validate.rules).string = {
+    min_len: 1,
+    max_len: 100,
+    ignore_empty: true
+  }];
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message DeleteUserRequest {
+  string user_id = 1 [(validate.rules).string = {
+    min_len: 1,
+    max_len: 64
+  }];
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+}
+
+message User {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string full_name = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+} 

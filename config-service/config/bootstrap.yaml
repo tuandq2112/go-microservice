@@ -1,0 +1,4 @@
+SERVICE_NAME: config-service
+HOST: localhost
+PORT: 50051
+CONFIG_FOLDER_PATH: ./config

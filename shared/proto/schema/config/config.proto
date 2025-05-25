@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package config;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/tuandq2112/go-microservices/shared/proto/types/config;";
+
+
+service ConfigService {
+    rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+}
+  
+message GetConfigRequest {
+  string serviceName = 1;
+  string env = 2;
+}
+
+message GetConfigResponse {
+  google.protobuf.Struct value = 1;
+}
+

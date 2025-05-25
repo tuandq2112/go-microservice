@@ -1,0 +1,4 @@
+HOST: localhost
+PORT: "8080"
+USER_SERVICE_HOST: localhost
+USER_SERVICE_PORT: "50052"
