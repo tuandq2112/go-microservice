@@ -7,8 +7,8 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/tuandq2112/go-microservices/api-gateway/appconfig"
-	"github.com/tuandq2112/go-microservices/api-gateway/internal/interface/http/middlewares"
 	"github.com/tuandq2112/go-microservices/shared/logger"
+	"github.com/tuandq2112/go-microservices/shared/middlewares"
 	"github.com/tuandq2112/go-microservices/shared/proto/types/user"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -51,8 +51,13 @@ func (s *HttpServer) Start() error {
 	}
 
 	s.logger.Info(fmt.Sprintf("API Gateway starting on %s:%s", appconfig.Host, appconfig.Port))
-	wrapperHandler := middlewares.JWTMiddleware(gwmux)
-	wrapperHandler=  middlewares.LoggingMiddleware(middlewares.JWTMiddleware(gwmux))
+	wrapperHandler := middlewares.JWTMiddleware(middlewares.WhitelistPaths{
+		Get:    appconfig.WHITELIST_METHODS_GET_PATH,
+		Post:   appconfig.WHITELIST_METHODS_POST_PATH,
+		Put:    appconfig.WHITELIST_METHODS_PUT_PATH,
+		Delete: appconfig.WHITELIST_METHODS_DELETE_PATH,
+	}, appconfig.USER_CONTEXT_KEY)(gwmux)
+	wrapperHandler = middlewares.LoggingMiddleware(wrapperHandler)
 	wrapperHandler = middlewares.EnableCORS(wrapperHandler)
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%s", appconfig.Host, appconfig.Port), wrapperHandler); err != nil {
 		s.logger.Error("Failed to start server", zap.Error(err))

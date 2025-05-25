@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
-	"log"
-	"net"
+	"os"
 
+	"github.com/oklog/run"
+	"github.com/tuandq2112/go-microservices/shared/interceptors"
+	"github.com/tuandq2112/go-microservices/shared/logger"
 	pb "github.com/tuandq2112/go-microservices/shared/proto/types/user"
+	"github.com/tuandq2112/go-microservices/shared/server"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -30,16 +34,38 @@ func (s *UserServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.G
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":50052")
+	logger := logger.GetLogger()
+
+	unaryInts := []grpc.UnaryServerInterceptor{
+		interceptors.UnaryLoggerInterceptor(logger),
+		interceptors.UnaryRecoveryInterceptor(logger),
+	}
+	streamInts := []grpc.StreamServerInterceptor{
+		interceptors.StreamLoggerInterceptor(logger),
+		interceptors.StreamRecoveryInterceptor(logger),
+	}
+	g := &run.Group{}
+	_, start, stop, err := server.BuildGRPCServer(
+		":50052",
+		func(s *grpc.Server) {
+			pb.RegisterUserServiceServer(s, &UserServer{})
+		},
+		unaryInts,
+		streamInts,
+	)
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		logger.Error("Failed to build grpc server", zap.Error(err))
+		os.Exit(1)
 	}
+	g.Add(func() error {
+		logger.Info("User Service starting on :50052")
+		return start()
+	}, func(err error) {
+		logger.Info("Shutting down gRPC server...")
+		stop()
+	})
 
-	server := grpc.NewServer()
-	pb.RegisterUserServiceServer(server, &UserServer{})
-
-	log.Println("User Service starting on :50051")
-	if err := server.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+	if err := g.Run(); err != nil {
+		logger.Error("Server exited", zap.Error(err))
 	}
-} 
+}

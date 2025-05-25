@@ -10,6 +10,8 @@ deps:
 	@go install github.com/bufbuild/buf/cmd/buf@v1.26.1
 	@cd shared && go mod tidy
 	@cd shared/proto/schema && $(MAKE) generate
+	@cd shared && go mod tidy
+	@cd config-service && go mod tidy
 	@cd api-gateway && go mod tidy
 	@cd user-service && go mod tidy
 
