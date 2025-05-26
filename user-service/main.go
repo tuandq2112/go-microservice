@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/oklog/run"
 	"github.com/tuandq2112/go-microservices/shared/interceptors"
@@ -36,6 +39,21 @@ func (s *UserServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.G
 func main() {
 	logger := logger.GetLogger()
 
+	g := &run.Group{}
+
+	start, stop := buildGRPCServer(logger)
+
+	g.Add(start, stop)
+
+	signalStart, signalStop := buildSignalHandler(logger)
+	g.Add(signalStart, signalStop)
+
+	if err := g.Run(); err != nil {
+		logger.Error("Server exited", zap.Error(err))
+	}
+}
+
+func buildGRPCServer(logger logger.Logger) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryLoggerInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
@@ -44,28 +62,30 @@ func main() {
 		interceptors.StreamLoggerInterceptor(logger),
 		interceptors.StreamRecoveryInterceptor(logger),
 	}
-	g := &run.Group{}
 	_, start, stop, err := server.BuildGRPCServer(
 		":50052",
 		func(s *grpc.Server) {
+			logger.Info("Registering UserServiceServer")
 			pb.RegisterUserServiceServer(s, &UserServer{})
 		},
 		unaryInts,
 		streamInts,
 	)
 	if err != nil {
-		logger.Error("Failed to build grpc server", zap.Error(err))
-		os.Exit(1)
+		return nil, nil
 	}
-	g.Add(func() error {
-		logger.Info("User Service starting on :50052")
-		return start()
-	}, func(err error) {
-		logger.Info("Shutting down gRPC server...")
-		stop()
-	})
 
-	if err := g.Run(); err != nil {
-		logger.Error("Server exited", zap.Error(err))
-	}
+	return start, stop
+}
+
+func buildSignalHandler(logger logger.Logger) (func() error, func(error)) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	return func() error {
+			sig := <-sigs
+			return fmt.Errorf("signal received: %v", sig)
+		}, func(err error) {
+			close(sigs)
+		}
 }

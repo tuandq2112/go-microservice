@@ -15,7 +15,7 @@ func BuildGRPCServer(
 ) (
 	server *grpc.Server,
 	start func() error,
-	stop func(),
+	stop func(err error),
 	err error,
 ) {
 	var opts []grpc.ServerOption
@@ -40,7 +40,7 @@ func BuildGRPCServer(
 		return server.Serve(lis)
 	}
 
-	stop = func() {
+	stop = func(err error) {
 		server.GracefulStop()
 	}
 

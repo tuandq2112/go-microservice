@@ -1,13 +1,18 @@
 package appconfig
 
-import bootstrapLoader "github.com/tuandq2112/go-microservices/shared/loader"
+import (
+	"os"
+
+	bootstrapLoader "github.com/tuandq2112/go-microservices/shared/loader"
+)
 
 var (
-	Port = 50051
-	Host = "localhost"
+	Port             = 50051
+	Host             = "127.0.0.1"
 	ConfigFolderPath = "./config"
-	ServiceName = "config-service"
+	ServiceName      = "config-service"
 )
+
 func InitConfig() {
 	bootstrapLoader.InitBootstrap()
 	loadAppConfig()
@@ -15,8 +20,12 @@ func InitConfig() {
 
 func loadAppConfig() {
 	cfg := bootstrapLoader.GetConfig()
+
+	if configFolderPath := os.Getenv("CONFIG_FOLDER_PATH"); configFolderPath != "" {
+		ConfigFolderPath = configFolderPath
+	}
+
 	Port = cfg.GetInt("PORT")
 	Host = cfg.GetString("HOST")
-	ConfigFolderPath = cfg.GetString("CONFIG_FOLDER_PATH")
 	ServiceName = cfg.GetString("SERVICE_NAME")
 }

@@ -1,4 +1,4 @@
-CONFIG_SERVICE_HOST: localhost
+CONFIG_SERVICE_HOST: config-service.service.consul
 CONFIG_SERVICE_PORT: 50051
 SERVICE_NAME: api-gateway
 ENV: staging

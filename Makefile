@@ -23,10 +23,17 @@ build: proto
 	@go build -o bin/api-gateway api-gateway/main.go
 	@go build -o bin/user-service user-service/main.go
 
+run-config: 
+	@echo "Starting Config Service..."
+	@CONFIG_FILE=./config-service/config/bootstrap.yaml \
+	CONFIG_FOLDER_PATH=./config-service/config \
+	go run config-service/main.go grpc-server
+
 # Run API Gateway
 run-gateway:
 	@echo "Starting API Gateway..."
-	@go run api-gateway/main.go
+	@CONFIG_FILE=./api-gateway/config/bootstrap.yaml \
+	go run api-gateway/main.go http-gateway
 
 # Run User Service
 run-user:
@@ -42,7 +49,7 @@ clean:
 # Run all services (in separate terminals)
 run-all:
 	@echo "Starting all services..."
-	@make run-user & make run-gateway
+	@make run-user & make run-gateway & make run-config
 
 # Help command
 help:
