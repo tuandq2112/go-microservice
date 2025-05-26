@@ -63,3 +63,9 @@ help:
 	@echo "   make clean      - Clean generated files"
 	@echo "   make deps       - Install dependencies"
 	@echo "   make help       - Show this help message"
+
+build-docker:
+	docker build -f ./deploy/Dockerfile -t dev-container:1.0.0 .
+
+build-binary:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -o ./bin/api-gateway ./api-gateway/main.go

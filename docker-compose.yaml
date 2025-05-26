@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  gateway-service:
+    image: dev-container:1.0.0
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - ./bin:/app
+    working_dir: /app
+    command: ["./api-gateway", "http-gateway"]
+    ports:
+      - target: 8080
+        published: 8082
+        protocol: tcp
+        mode: host
+    
