@@ -8,9 +8,9 @@ package grpcserver
 
 import (
 	"github.com/google/wire"
+	"github.com/tuandq2112/go-microservices/config-service/infrastructure/config_loader"
+	"github.com/tuandq2112/go-microservices/config-service/infrastructure/server"
 	config4 "github.com/tuandq2112/go-microservices/config-service/internal/domain/config"
-	"github.com/tuandq2112/go-microservices/config-service/internal/infrastructure/config"
-	"github.com/tuandq2112/go-microservices/config-service/internal/interface/grpc"
 	config3 "github.com/tuandq2112/go-microservices/config-service/internal/interface/handler/config"
 	config2 "github.com/tuandq2112/go-microservices/config-service/internal/usecase/config"
 	"github.com/tuandq2112/go-microservices/shared/discovery"
@@ -18,7 +18,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeServer() (*grpc.GrpcServer, error) {
+func InitializeServer() (*server.GrpcServer, error) {
 	configLoader := config.NewConfigLoader()
 	configUseCase := config2.NewConfigUseCase(configLoader)
 	configHandler := config3.NewConfigHandler(configUseCase)
@@ -26,7 +26,7 @@ func InitializeServer() (*grpc.GrpcServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	grpcServer, err := grpc.NewGrpcServer(configHandler, consulRegistrar)
+	grpcServer, err := server.NewGrpcServer(configHandler, consulRegistrar)
 	if err != nil {
 		return nil, err
 	}
