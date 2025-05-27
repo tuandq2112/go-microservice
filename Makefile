@@ -38,7 +38,7 @@ run-gateway:
 # Run User Service
 run-user:
 	@echo "Starting User Service..."
-	@go run user-service/main.go
+	@go run user-service/main.go grpc-server
 
 # Clean generated files and binaries
 clean:
