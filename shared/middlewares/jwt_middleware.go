@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/tuandq2112/go-microservices/shared/errors"
 )
 
 type Whitelist struct {
@@ -31,7 +33,10 @@ func routeToRegex(route string) string {
 
 func isRouteMatch(route, path string) bool {
 	pattern := routeToRegex(route)
-	matched, _ := regexp.MatchString(pattern, path)
+	matched, err := regexp.MatchString(pattern, path)
+	if err != nil {
+		return false
+	}
 	return matched
 }
 
@@ -69,24 +74,52 @@ func JWTMiddleware(whitelistPaths WhitelistPaths, userContextKey interface{}) fu
 				next.ServeHTTP(w, r)
 				return
 			}
+
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, "Unauthorized", http.StatusForbidden)
+				localizedMessage := T(r, errors.ErrUnauthorized, nil)
+				errors.WriteError(w, errors.UnauthorizedError, localizedMessage, nil)
 				return
 			}
 
 			tokenParts := strings.Split(authHeader, " ")
 			if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-				http.Error(w, "Invalid Authorization header format", http.StatusUnauthorized)
+				localizedMessage := T(r, errors.ErrBadRequest, map[string]interface{}{
+					"details": "Invalid Authorization header format",
+				})
+				errors.WriteError(w, errors.BadRequestError, localizedMessage, nil)
 				return
 			}
 
 			tokenString := tokenParts[1]
 			claims, err := ParseJWT(tokenString)
 			if err != nil {
-				http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+				// Handle connection errors
+				if errors.IsConnectionError(err) {
+					localizedMessage := T(r, errors.ErrConnectionFailed, map[string]interface{}{
+						"details": "Unable to connect to authentication service",
+					})
+					errors.WriteError(w, errors.ConnectionError, localizedMessage, err)
+					return
+				}
+
+				// Handle internal errors (like JWT parsing errors)
+				if strings.Contains(err.Error(), "internal") {
+					localizedMessage := T(r, errors.ErrInternalServer, map[string]interface{}{
+						"details": "Error processing authentication token",
+					})
+					errors.WriteError(w, errors.InternalServerError, localizedMessage, err)
+					return
+				}
+
+				// Handle invalid/expired token
+				localizedMessage := T(r, errors.ErrUnauthorized, map[string]interface{}{
+					"details": "Invalid or expired token",
+				})
+				errors.WriteError(w, errors.UnauthorizedError, localizedMessage, err)
 				return
 			}
+
 			ctx := context.WithValue(r.Context(), userContextKey, claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

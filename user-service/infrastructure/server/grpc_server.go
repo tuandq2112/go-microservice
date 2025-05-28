@@ -8,9 +8,11 @@ import (
 
 	"github.com/oklog/run"
 	"github.com/tuandq2112/go-microservices/shared/interceptors"
+	"github.com/tuandq2112/go-microservices/shared/locale"
 	"github.com/tuandq2112/go-microservices/shared/logger"
 	pb "github.com/tuandq2112/go-microservices/shared/proto/types/user"
 	"github.com/tuandq2112/go-microservices/shared/server"
+	"github.com/tuandq2112/go-microservices/user-service/appconfig"
 	"github.com/tuandq2112/go-microservices/user-service/internal/interfaces/handler"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -19,12 +21,13 @@ import (
 type GRPCServer struct {
 	Handler *handler.UserHandler
 	Logger  logger.Logger
+	Locale  *locale.Locale
 }
 
 func (s *GRPCServer) Start() {
 	g := &run.Group{}
 
-	start, stop := buildGRPCServer(s.Logger, s.Handler)
+	start, stop := buildGRPCServer(s.Logger, s.Handler, s.Locale)
 
 	g.Add(start, stop)
 
@@ -36,17 +39,28 @@ func (s *GRPCServer) Start() {
 	}
 }
 
-func buildGRPCServer(logger logger.Logger, handler *handler.UserHandler) (func() error, func(error)) {
+func buildGRPCServer(logger logger.Logger, handler *handler.UserHandler, locale *locale.Locale) (func() error, func(error)) {
+	port := "50052"
+	if appconfig.Port != "" {
+		port = appconfig.Port
+	}
+
 	unaryInts := []grpc.UnaryServerInterceptor{
+		interceptors.UnaryLocaleInterceptor(locale),
 		interceptors.UnaryLoggerInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
 	}
 	streamInts := []grpc.StreamServerInterceptor{
+		interceptors.StreamLocaleInterceptor(locale),
 		interceptors.StreamLoggerInterceptor(logger),
 		interceptors.StreamRecoveryInterceptor(logger),
 	}
+
+	addr := fmt.Sprintf(":%s", port)
+	logger.Info("Starting gRPC server", zap.String("address", addr))
+
 	_, start, stop, err := server.BuildGRPCServer(
-		":50052",
+		addr,
 		func(s *grpc.Server) {
 			logger.Info("Registering UserServiceServer")
 			pb.RegisterUserServiceServer(s, handler)
@@ -55,6 +69,7 @@ func buildGRPCServer(logger logger.Logger, handler *handler.UserHandler) (func()
 		streamInts,
 	)
 	if err != nil {
+		logger.Error("Failed to build gRPC server", zap.Error(err))
 		return nil, nil
 	}
 

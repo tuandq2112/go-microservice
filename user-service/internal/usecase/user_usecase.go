@@ -2,43 +2,101 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/tuandq2112/go-microservices/user-service/internal/domain"
+	customerrors "github.com/tuandq2112/go-microservices/user-service/internal/errors"
 )
 
-// UserUsecase handles the business logic for user operations
 type UserUsecase struct {
 	userRepo domain.UserRepository
 }
 
-// NewUserUsecase creates a new instance of UserUsecase
 func NewUserUsecase(userRepo domain.UserRepository) *UserUsecase {
 	return &UserUsecase{
 		userRepo: userRepo,
 	}
 }
 
-// GetUser retrieves a user by ID
 func (s *UserUsecase) GetUser(ctx context.Context, userID string) (*domain.User, error) {
-	return s.userRepo.GetByID(ctx, userID)
+	return nil, customerrors.ErrInvalidId(ctx, map[string]interface{}{
+		"user_id": userID,
+		"reason":  "empty_id",
+	})
+
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return nil, customerrors.ErrUserNotFound(ctx, map[string]interface{}{
+				"user_id": userID,
+			})
+		}
+		return nil, customerrors.ErrInternal(ctx, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+	return user, nil
 }
 
-// CreateUser creates a new user
 func (s *UserUsecase) CreateUser(ctx context.Context, user *domain.User) error {
+	if user == nil {
+		return customerrors.ErrInvalidId(ctx, map[string]interface{}{
+			"reason": "nil_user",
+		})
+	}
+
 	now := time.Now()
 	user.CreatedAt = now
 	user.UpdatedAt = now
-	return s.userRepo.Create(ctx, user)
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		return customerrors.ErrInternal(ctx, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+	return nil
 }
 
-// UpdateUser updates an existing user
 func (s *UserUsecase) UpdateUser(ctx context.Context, user *domain.User) error {
+	if user == nil || user.ID == "" {
+		return customerrors.ErrInvalidId(ctx, map[string]interface{}{
+			"user_id": user.ID,
+			"reason":  "invalid_user",
+		})
+	}
+
 	user.UpdatedAt = time.Now()
-	return s.userRepo.Update(ctx, user)
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return customerrors.ErrUserNotFound(ctx, map[string]interface{}{
+				"user_id": user.ID,
+			})
+		}
+		return customerrors.ErrInternal(ctx, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+	return nil
 }
 
-// DeleteUser deletes a user by ID
 func (s *UserUsecase) DeleteUser(ctx context.Context, userID string) error {
-	return s.userRepo.Delete(ctx, userID)
+	if userID == "" {
+		return customerrors.ErrInvalidId(ctx, map[string]interface{}{
+			"user_id": userID,
+			"reason":  "empty_id",
+		})
+	}
+
+	if err := s.userRepo.Delete(ctx, userID); err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return customerrors.ErrUserNotFound(ctx, map[string]interface{}{
+				"user_id": userID,
+			})
+		}
+		return customerrors.ErrInternal(ctx, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+	return nil
 }

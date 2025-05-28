@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	"github.com/tuandq2112/go-microservices/shared/util"
 )
 
 var (
@@ -23,7 +23,7 @@ func GenerateJWT(expiry time.Duration, additionalData map[string]interface{}) (m
 		"iat": time.Now().Unix(),
 		"iss": ISSUER,
 		"aud": AUDIENCE,
-		"jti": GenerateRandomString(10),
+		"jti": util.GenerateRandomString(10),
 	}
 
 	maps.Copy(claims, additionalData)
@@ -53,8 +53,4 @@ func ParseJWT(tokenStr string) (jwt.MapClaims, error) {
 	}
 
 	return claims, nil
-}
-func GenerateRandomString(length int) string {
-	randomUUID := uuid.New()
-	return randomUUID.String()[:length]
 }

@@ -2,7 +2,13 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"time"
+)
+
+// Error definitions
+var (
+	ErrUserNotFound = errors.New("user not found")
 )
 
 // User represents the core user entity

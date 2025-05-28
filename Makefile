@@ -38,7 +38,8 @@ run-gateway:
 # Run User Service
 run-user:
 	@echo "Starting User Service..."
-	@go run user-service/main.go grpc-server
+	@CONFIG_FILE=./user-service/config/bootstrap.yaml \
+	go run user-service/main.go grpc-server
 
 # Clean generated files and binaries
 clean:

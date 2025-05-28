@@ -1,0 +1,7 @@
+[user]
+not_found = "Không tìm thấy người dùng"
+invalid_id = "ID người dùng không hợp lệ: {{.ID}}"
+create_failed = "Không thể tạo người dùng"
+update_failed = "Không thể cập nhật người dùng"
+delete_failed = "Không thể xóa người dùng"
+internal_error = "Lỗi máy chủ nội bộ"

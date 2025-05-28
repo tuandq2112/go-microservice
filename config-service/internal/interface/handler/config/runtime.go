@@ -23,7 +23,7 @@ func (h *ConfigHandler) GetConfig(ctx context.Context, req *configpb.GetConfigRe
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -39,5 +39,5 @@ func (h *ConfigHandler) GetConfig(ctx context.Context, req *configpb.GetConfigRe
 }
 
 func MapToStruct(m map[string]interface{}) (*structpb.Struct, error) {
-    return structpb.NewStruct(m)
+	return structpb.NewStruct(m)
 }

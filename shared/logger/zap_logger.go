@@ -20,6 +20,7 @@ func InitLogger() (Logger, error) {
 	cfg := zap.NewProductionConfig()
 
 	cfg.Encoding = "console"
+	cfg.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 
 	// Cấu hình encoder cho console, bắt buộc set các encoder để tránh lỗi runtime
 	cfg.EncoderConfig = zapcore.EncoderConfig{

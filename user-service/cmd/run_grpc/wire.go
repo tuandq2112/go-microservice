@@ -5,6 +5,7 @@ package rungrpc
 
 import (
 	"github.com/google/wire"
+	"github.com/tuandq2112/go-microservices/shared/locale"
 	"github.com/tuandq2112/go-microservices/shared/logger"
 	"github.com/tuandq2112/go-microservices/user-service/infrastructure/repository/memory"
 	"github.com/tuandq2112/go-microservices/user-service/infrastructure/server"
@@ -20,9 +21,14 @@ var userSet = wire.NewSet(
 	wire.Bind(new(domain.UserRepository), new(*memory.UserRepository)),
 )
 
+func provideLocale() *locale.Locale {
+	return locale.Init("user-service/resources/locales")
+}
+
 func InitializeApp() (*server.GRPCServer, error) {
 	wire.Build(
 		logger.InitLogger,
+		provideLocale,
 		userSet,
 		wire.Struct(new(server.GRPCServer), "*"),
 	)

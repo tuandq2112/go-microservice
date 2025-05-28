@@ -7,15 +7,15 @@ import (
 )
 
 var (
-	Host string
-	Port string
-	UserServiceHost string
-	UserServicePort string
-	WHITELIST_METHODS_GET_PATH []string
-	WHITELIST_METHODS_POST_PATH []string
-	WHITELIST_METHODS_PUT_PATH []string
+	Host                          string
+	Port                          string
+	UserServiceHost               string
+	UserServicePort               string
+	WHITELIST_METHODS_GET_PATH    []string
+	WHITELIST_METHODS_POST_PATH   []string
+	WHITELIST_METHODS_PUT_PATH    []string
 	WHITELIST_METHODS_DELETE_PATH []string
-	USER_CONTEXT_KEY string = "user_context"
+	USER_CONTEXT_KEY              string = "user_context"
 )
 
 func InitConfig() {

@@ -1,0 +1,7 @@
+[user]
+not_found = "User not found"
+invalid_id = "Invalid user ID"
+create_failed = "Failed to create user"
+update_failed = "Failed to update user"
+delete_failed = "Failed to delete user"
+internal_error = "Internal server error"

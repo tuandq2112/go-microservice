@@ -7,6 +7,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/tuandq2112/go-microservices/api-gateway/appconfig"
+	"github.com/tuandq2112/go-microservices/shared/locale"
 	"github.com/tuandq2112/go-microservices/shared/logger"
 	"github.com/tuandq2112/go-microservices/shared/middlewares"
 	"github.com/tuandq2112/go-microservices/shared/proto/types/user"
@@ -20,9 +21,13 @@ type HttpServer struct {
 	Port   string
 	mux    *runtime.ServeMux
 	logger logger.Logger
+	locale *locale.Locale
 }
 
 func NewHttpServer() *HttpServer {
+	// Initialize locale
+	localeInstance := locale.Init("shared/locale")
+
 	return &HttpServer{
 		Host: appconfig.Host,
 		Port: appconfig.Port,
@@ -30,6 +35,7 @@ func NewHttpServer() *HttpServer {
 			runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}),
 		),
 		logger: logger.GetLogger(),
+		locale: localeInstance,
 	}
 }
 
@@ -51,15 +57,21 @@ func (s *HttpServer) Start() error {
 	}
 
 	s.logger.Info(fmt.Sprintf("API Gateway starting on %s:%s", appconfig.Host, appconfig.Port))
-	wrapperHandler := middlewares.JWTMiddleware(middlewares.WhitelistPaths{
-		Get:    appconfig.WHITELIST_METHODS_GET_PATH,
-		Post:   appconfig.WHITELIST_METHODS_POST_PATH,
-		Put:    appconfig.WHITELIST_METHODS_PUT_PATH,
-		Delete: appconfig.WHITELIST_METHODS_DELETE_PATH,
-	}, appconfig.USER_CONTEXT_KEY)(gwmux)
-	wrapperHandler = middlewares.LoggingMiddleware(wrapperHandler)
-	wrapperHandler = middlewares.EnableCORS(wrapperHandler)
-	if err := http.ListenAndServe(fmt.Sprintf("%s:%s", appconfig.Host, appconfig.Port), wrapperHandler); err != nil {
+
+	// Build middleware chain
+	var handler http.Handler = s.mux
+	// handler = middlewares.JWTMiddleware(middlewares.WhitelistPaths{
+	// 	Get:    appconfig.WHITELIST_METHODS_GET_PATH,
+	// 	Post:   appconfig.WHITELIST_METHODS_POST_PATH,
+	// 	Put:    appconfig.WHITELIST_METHODS_PUT_PATH,
+	// 	Delete: appconfig.WHITELIST_METHODS_DELETE_PATH,
+	// }, appconfig.USER_CONTEXT_KEY)(handler)
+	handler = middlewares.LoggingMiddleware(handler)
+	// handler = middlewares.LocaleMiddleware(s.locale)(handler)
+
+	handler = middlewares.EnableCORS(handler)
+
+	if err := http.ListenAndServe(fmt.Sprintf("%s:%s", appconfig.Host, appconfig.Port), handler); err != nil {
 		s.logger.Error("Failed to start server", zap.Error(err))
 	}
 	return nil

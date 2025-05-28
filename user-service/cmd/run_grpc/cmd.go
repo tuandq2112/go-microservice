@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+	"github.com/tuandq2112/go-microservices/user-service/appconfig"
 )
 
 var RunGRPCServerCmd = &cobra.Command{
@@ -11,6 +12,7 @@ var RunGRPCServerCmd = &cobra.Command{
 	Short: "Run GRPC Server",
 	Long:  "Run GRPC Server",
 	Run: func(cmd *cobra.Command, args []string) {
+		appconfig.InitConfig()
 		app, err := InitializeApp()
 		if err != nil {
 			log.Fatalf("Failed to initialize app: %v", err)

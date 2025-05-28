@@ -28,7 +28,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 				bodyCopy = bodyBytes
 				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body for next handler
 			} else {
-				loggingLogger.Warn(fmt.Sprintf("Failed to read request body: %v", err))
+				loggingLogger.Debug(fmt.Sprintf("Failed to read request body: %v", err))
 			}
 		}
 
@@ -42,7 +42,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(lrw, r)
 
 		// Log request and response details
-		loggingLogger.Info("Logger request",
+		loggingLogger.Debug("Logger request",
 			zap.String("method", r.Method),
 			zap.String("uri", r.RequestURI),
 			zap.String("query", queryParams),
