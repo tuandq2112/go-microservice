@@ -32,11 +32,11 @@ func LocaleMiddleware(l *locale.Locale) func(http.Handler) http.Handler {
 			tag, _ := language.MatchStrings(matcher, acceptLang)
 			lang := strings.Split(tag.String(), "-")[0]
 
-			localizer := l.NewLocalizer(lang)
+			localizer := l.CreateLocalizer(lang)
 
 			ctx := context.WithValue(r.Context(), localizerKey, localizer)
 			ctx = context.WithValue(ctx, translatorKey, func(messageID string, data map[string]interface{}) string {
-				return l.T(localizer, messageID, data)
+				return l.Translate(localizer, messageID, data)
 			})
 
 			next.ServeHTTP(w, r.WithContext(ctx))

@@ -41,5 +41,5 @@ func InitializeApp() (*server.GRPCServer, error) {
 var userSet = wire.NewSet(memory.NewUserRepository, usecase.NewUserUsecase, handler.NewUserHandler, wire.Bind(new(domain.UserRepository), new(*memory.UserRepository)))
 
 func provideLocale() *locale.Locale {
-	return locale.Init("user-service/resources/locales")
+	return locale.New("user-service/resources/locales")
 }

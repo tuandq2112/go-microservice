@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/BurntSushi/toml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -16,65 +15,66 @@ type Locale struct {
 	bundle *i18n.Bundle
 }
 
-var (
-	once     sync.Once
-	instance *Locale
-)
+// New creates a new Locale instance and loads all TOML files from the given path
+func New(rootPath string) *Locale {
+	b := i18n.NewBundle(language.English)
+	b.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 
-func Init(rootPath string) *Locale {
-	once.Do(func() {
-		b := i18n.NewBundle(language.English)
-		b.RegisterUnmarshalFunc("toml", toml.Unmarshal)
+	if err := loadLocaleFiles(b, rootPath); err != nil {
+		fmt.Printf("Error loading locale files: %v\n", err)
+	}
 
-		entries, err := os.ReadDir(rootPath)
+	return &Locale{bundle: b}
+}
+
+func loadLocaleFiles(b *i18n.Bundle, rootPath string) error {
+	entries, err := os.ReadDir(rootPath)
+	if err != nil {
+		return fmt.Errorf("error reading locale root directory %s: %v", rootPath, err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		langDir := filepath.Join(rootPath, entry.Name())
+		files, err := os.ReadDir(langDir)
 		if err != nil {
-			fmt.Printf("Error reading locale root directory %s: %v\n", rootPath, err)
-		} else {
-			for _, entry := range entries {
-				if entry.IsDir() {
-					langDir := filepath.Join(rootPath, entry.Name())
-					files, err := os.ReadDir(langDir)
-					if err != nil {
-						fmt.Printf("Error reading locale dir %s: %v\n", langDir, err)
-						continue
-					}
-					for _, file := range files {
-						if !file.IsDir() && strings.HasSuffix(file.Name(), ".toml") {
-							filePath := filepath.Join(langDir, file.Name())
-							fmt.Printf("Loading locale file: %s\n", filePath)
-							if _, err := b.LoadMessageFile(filePath); err != nil {
-								fmt.Printf("Failed to load %s: %v\n", filePath, err)
-							}
-						}
-					}
+			fmt.Printf("Error reading locale dir %s: %v\n", langDir, err)
+			continue
+		}
+
+		for _, file := range files {
+			if !file.IsDir() && strings.HasSuffix(file.Name(), ".toml") {
+				filePath := filepath.Join(langDir, file.Name())
+				if _, err := b.LoadMessageFile(filePath); err != nil {
+					fmt.Printf("Failed to load %s: %v\n", filePath, err)
 				}
 			}
 		}
-
-		instance = &Locale{bundle: b}
-	})
-	return instance
+	}
+	return nil
 }
 
-func (l *Locale) NewLocalizer(lang string) *i18n.Localizer {
+// CreateLocalizer creates a new localizer for the given language
+func (l *Locale) CreateLocalizer(lang string) *i18n.Localizer {
 	if l == nil || l.bundle == nil {
-		b := i18n.NewBundle(language.English)
-		b.RegisterUnmarshalFunc("toml", toml.Unmarshal)
-		return i18n.NewLocalizer(b, "en")
+		return nil
 	}
 	return i18n.NewLocalizer(l.bundle, lang)
 }
 
-func (l *Locale) T(localizer *i18n.Localizer, messageID string, data map[string]interface{}) string {
+func (l *Locale) Translate(localizer *i18n.Localizer, messageID string, data map[string]interface{}) string {
 	if localizer == nil {
 		return messageID
 	}
+
 	msg, err := localizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageID,
 		TemplateData: data,
 	})
 	if err != nil {
-		fmt.Printf("Error translating message %s: %v\n", messageID, err)
 		return messageID
 	}
 	return msg

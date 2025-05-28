@@ -9,6 +9,7 @@ import (
 var (
 	Host              string
 	Port              string
+	JWTSecret         string = "SUPER_SECRET"
 	WHITELIST_METHODS []string
 	USER_CONTEXT_KEY  string = "user_context"
 )
@@ -32,6 +33,9 @@ func loadAppConfig() {
 	}
 	if val, ok := configs["PORT"].(string); ok {
 		Port = val
+	}
+	if val, ok := configs["JWT_SECRET"].(string); ok {
+		JWTSecret = val
 	}
 
 	if val, ok := configs["WHITELIST_METHODS"].([]interface{}); ok {

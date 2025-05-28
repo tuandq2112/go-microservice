@@ -5,3 +5,12 @@ create_failed = "Failed to create user"
 update_failed = "Failed to update user"
 delete_failed = "Failed to delete user"
 internal_error = "Internal server error"
+
+[error]
+unauthorized = "Unauthorized access"
+forbidden = "Access forbidden"
+not_found = "Resource not found"
+internal_server = "Internal server error"
+bad_request = "Bad request"
+validation_failed = "Validation failed"
+connection_failed = "Connection failed" 

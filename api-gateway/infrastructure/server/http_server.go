@@ -7,7 +7,6 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/tuandq2112/go-microservices/api-gateway/appconfig"
-	"github.com/tuandq2112/go-microservices/shared/locale"
 	"github.com/tuandq2112/go-microservices/shared/logger"
 	"github.com/tuandq2112/go-microservices/shared/middlewares"
 	"github.com/tuandq2112/go-microservices/shared/proto/types/user"
@@ -21,12 +20,10 @@ type HttpServer struct {
 	Port   string
 	mux    *runtime.ServeMux
 	logger logger.Logger
-	locale *locale.Locale
 }
 
 func NewHttpServer() *HttpServer {
 	// Initialize locale
-	localeInstance := locale.Init("shared/locale")
 
 	return &HttpServer{
 		Host: appconfig.Host,
@@ -35,7 +32,6 @@ func NewHttpServer() *HttpServer {
 			runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}),
 		),
 		logger: logger.GetLogger(),
-		locale: localeInstance,
 	}
 }
 

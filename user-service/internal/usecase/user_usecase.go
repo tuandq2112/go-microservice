@@ -20,7 +20,7 @@ func NewUserUsecase(userRepo domain.UserRepository) *UserUsecase {
 }
 
 func (s *UserUsecase) GetUser(ctx context.Context, userID string) (*domain.User, error) {
-	return nil, customerrors.ErrInvalidId(ctx, map[string]interface{}{
+	return nil, customerrors.ErrInvalidId(map[string]interface{}{
 		"user_id": userID,
 		"reason":  "empty_id",
 	})
@@ -28,11 +28,11 @@ func (s *UserUsecase) GetUser(ctx context.Context, userID string) (*domain.User,
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return nil, customerrors.ErrUserNotFound(ctx, map[string]interface{}{
+			return nil, customerrors.ErrUserNotFound(map[string]interface{}{
 				"user_id": userID,
 			})
 		}
-		return nil, customerrors.ErrInternal(ctx, map[string]interface{}{
+		return nil, customerrors.ErrInternal(map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -41,7 +41,7 @@ func (s *UserUsecase) GetUser(ctx context.Context, userID string) (*domain.User,
 
 func (s *UserUsecase) CreateUser(ctx context.Context, user *domain.User) error {
 	if user == nil {
-		return customerrors.ErrInvalidId(ctx, map[string]interface{}{
+		return customerrors.ErrInvalidId(map[string]interface{}{
 			"reason": "nil_user",
 		})
 	}
@@ -51,7 +51,7 @@ func (s *UserUsecase) CreateUser(ctx context.Context, user *domain.User) error {
 	user.UpdatedAt = now
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
-		return customerrors.ErrInternal(ctx, map[string]interface{}{
+		return customerrors.ErrInternal(map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -60,7 +60,7 @@ func (s *UserUsecase) CreateUser(ctx context.Context, user *domain.User) error {
 
 func (s *UserUsecase) UpdateUser(ctx context.Context, user *domain.User) error {
 	if user == nil || user.ID == "" {
-		return customerrors.ErrInvalidId(ctx, map[string]interface{}{
+		return customerrors.ErrInvalidId(map[string]interface{}{
 			"user_id": user.ID,
 			"reason":  "invalid_user",
 		})
@@ -69,11 +69,11 @@ func (s *UserUsecase) UpdateUser(ctx context.Context, user *domain.User) error {
 	user.UpdatedAt = time.Now()
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return customerrors.ErrUserNotFound(ctx, map[string]interface{}{
+			return customerrors.ErrUserNotFound(map[string]interface{}{
 				"user_id": user.ID,
 			})
 		}
-		return customerrors.ErrInternal(ctx, map[string]interface{}{
+		return customerrors.ErrInternal(map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -82,7 +82,7 @@ func (s *UserUsecase) UpdateUser(ctx context.Context, user *domain.User) error {
 
 func (s *UserUsecase) DeleteUser(ctx context.Context, userID string) error {
 	if userID == "" {
-		return customerrors.ErrInvalidId(ctx, map[string]interface{}{
+		return customerrors.ErrInvalidId(map[string]interface{}{
 			"user_id": userID,
 			"reason":  "empty_id",
 		})
@@ -90,11 +90,11 @@ func (s *UserUsecase) DeleteUser(ctx context.Context, userID string) error {
 
 	if err := s.userRepo.Delete(ctx, userID); err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return customerrors.ErrUserNotFound(ctx, map[string]interface{}{
+			return customerrors.ErrUserNotFound(map[string]interface{}{
 				"user_id": userID,
 			})
 		}
-		return customerrors.ErrInternal(ctx, map[string]interface{}{
+		return customerrors.ErrInternal(map[string]interface{}{
 			"error": err.Error(),
 		})
 	}

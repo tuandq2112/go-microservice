@@ -22,7 +22,7 @@ var userSet = wire.NewSet(
 )
 
 func provideLocale() *locale.Locale {
-	return locale.Init("user-service/resources/locales")
+	return locale.New("user-service/resources/locales")
 }
 
 func InitializeApp() (*server.GRPCServer, error) {

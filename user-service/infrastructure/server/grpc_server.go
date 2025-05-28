@@ -49,11 +49,13 @@ func buildGRPCServer(logger logger.Logger, handler *handler.UserHandler, locale 
 		interceptors.UnaryLocaleInterceptor(locale),
 		interceptors.UnaryLoggerInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
+		interceptors.UnaryAuthInterceptor(logger, appconfig.JWTSecret),
 	}
 	streamInts := []grpc.StreamServerInterceptor{
 		interceptors.StreamLocaleInterceptor(locale),
 		interceptors.StreamLoggerInterceptor(logger),
 		interceptors.StreamRecoveryInterceptor(logger),
+		interceptors.StreamAuthInterceptor(logger, appconfig.JWTSecret),
 	}
 
 	addr := fmt.Sprintf(":%s", port)

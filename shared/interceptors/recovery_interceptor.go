@@ -3,11 +3,10 @@ package interceptors
 import (
 	"context"
 
+	"github.com/tuandq2112/go-microservices/shared/errors"
 	"github.com/tuandq2112/go-microservices/shared/logger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func UnaryRecoveryInterceptor(logger logger.Logger) grpc.UnaryServerInterceptor {
@@ -18,7 +17,7 @@ func UnaryRecoveryInterceptor(logger logger.Logger) grpc.UnaryServerInterceptor 
 					zap.String("method", info.FullMethod),
 					zap.Any("panic", r),
 				)
-				err = status.Errorf(codes.Internal, T(ctx, "user.internal_error", nil))
+				err = errors.InternalServerError()
 			}
 		}()
 		return handler(ctx, req)
@@ -34,7 +33,7 @@ func StreamRecoveryInterceptor(logger logger.Logger) grpc.StreamServerIntercepto
 					zap.String("method", info.FullMethod),
 					zap.Any("panic", r),
 				)
-				err = status.Errorf(codes.Internal, T(ss.Context(), "user.internal_error", nil))
+				err = errors.InternalServerError()
 			}
 		}()
 		err = handler(srv, ss)

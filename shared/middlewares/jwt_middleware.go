@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tuandq2112/go-microservices/shared/errors"
+	"google.golang.org/grpc/codes"
 )
 
 type Whitelist struct {
@@ -77,46 +78,23 @@ func JWTMiddleware(whitelistPaths WhitelistPaths, userContextKey interface{}) fu
 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				localizedMessage := T(r, errors.ErrUnauthorized, nil)
-				errors.WriteError(w, errors.UnauthorizedError, localizedMessage, nil)
+				err := errors.UnauthorizedError()
+				writeError(w, err)
 				return
 			}
 
 			tokenParts := strings.Split(authHeader, " ")
 			if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-				localizedMessage := T(r, errors.ErrBadRequest, map[string]interface{}{
-					"details": "Invalid Authorization header format",
-				})
-				errors.WriteError(w, errors.BadRequestError, localizedMessage, nil)
+				err := errors.BadRequestError()
+				writeError(w, err)
 				return
 			}
 
 			tokenString := tokenParts[1]
 			claims, err := ParseJWT(tokenString)
 			if err != nil {
-				// Handle connection errors
-				if errors.IsConnectionError(err) {
-					localizedMessage := T(r, errors.ErrConnectionFailed, map[string]interface{}{
-						"details": "Unable to connect to authentication service",
-					})
-					errors.WriteError(w, errors.ConnectionError, localizedMessage, err)
-					return
-				}
-
-				// Handle internal errors (like JWT parsing errors)
-				if strings.Contains(err.Error(), "internal") {
-					localizedMessage := T(r, errors.ErrInternalServer, map[string]interface{}{
-						"details": "Error processing authentication token",
-					})
-					errors.WriteError(w, errors.InternalServerError, localizedMessage, err)
-					return
-				}
-
-				// Handle invalid/expired token
-				localizedMessage := T(r, errors.ErrUnauthorized, map[string]interface{}{
-					"details": "Invalid or expired token",
-				})
-				errors.WriteError(w, errors.UnauthorizedError, localizedMessage, err)
+				err := errors.UnauthorizedError()
+				writeError(w, err)
 				return
 			}
 
@@ -124,4 +102,13 @@ func JWTMiddleware(whitelistPaths WhitelistPaths, userContextKey interface{}) fu
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func writeError(w http.ResponseWriter, err error) {
+	if customErr, ok := err.(interface{ Code() codes.Code }); ok {
+		w.WriteHeader(int(customErr.Code()))
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	w.Write([]byte(err.Error()))
 }
